@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from jinja2 import Template
-import json, tempfile, os
+import tempfile
 from weasyprint import HTML
 import resend
+from urllib.parse import quote, unquote
 
 app = FastAPI()
 
@@ -70,19 +71,19 @@ def evaluate_profile(answers):
 
 
 # ---------- WEBHOOK ENDPOINT ----------
-@app.post("/submit", response_class=HTMLResponse)
+@app.post("/submit")
 async def submit(request: Request):
 
     data = await request.json()
 
-    # Tally answers live inside fields
+    # Extract answers from Tally payload
     answers = {}
     for f in data.get("data", {}).get("fields", []):
         answers[f.get("key")] = f.get("value")
 
     workstyle, careers, major = evaluate_profile(answers)
 
-    # render HTML summary
+    # render HTML report
     with open("report.html") as f:
         template = Template(f.read())
 
@@ -97,7 +98,7 @@ async def submit(request: Request):
         HTML(string=html_out).write_pdf(tmp.name)
         pdf_path = tmp.name
 
-    # email PDF
+    # send email (if provided)
     email = data.get("data", {}).get("respondent", {}).get("email")
     if email:
         resend.Emails.send({
@@ -111,39 +112,13 @@ async def submit(request: Request):
             }]
         })
 
-    # show instant results
-return {
-    "redirect": f"https://paperfoundry.onrender.com/result?style={workstyle}"
-}
+    # IMPORTANT: redirect user to results page
+    safe_style = quote(workstyle)
+    return {
+        "redirect": f"https://paperfoundry.onrender.com/result?style={safe_style}"
+    }
 
-from urllib.parse import unquote
-from fastapi.responses import HTMLResponse
 
+# ---------- RESULT PAGE ----------
 @app.get("/result", response_class=HTMLResponse)
 def result(style: str = "Unknown"):
-
-    style = unquote(style)
-
-    return f"""
-    <html>
-    <head>
-        <title>Your Results</title>
-        <style>
-        body {{ font-family: Arial; padding:40px; }}
-        h1 {{ color:#0f172a; }}
-        .box {{ background:#f1f5f9; padding:20px; margin-top:20px; }}
-        </style>
-    </head>
-    <body>
-
-    <h1>Your Work Style: {style}</h1>
-
-    <div class='box'>
-    <p>Your full report is being prepared and emailed to you.</p>
-    <p>You may close this tab.</p>
-    </div>
-
-    </body>
-    </html>
-    """
-
