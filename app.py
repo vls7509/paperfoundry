@@ -122,3 +122,28 @@ async def submit(request: Request):
 # ---------- RESULT PAGE ----------
 @app.get("/result", response_class=HTMLResponse)
 def result(style: str = "Unknown"):
+
+    style = unquote(style)
+
+    return f"""
+    <html>
+    <head>
+        <title>Your Results</title>
+        <style>
+        body {{ font-family: Arial; padding:40px; }}
+        h1 {{ color:#0f172a; }}
+        .box {{ background:#f1f5f9; padding:20px; margin-top:20px; }}
+        </style>
+    </head>
+    <body>
+
+    <h1>Your Work Style: {style}</h1>
+
+    <div class='box'>
+    <p>Your full report is being prepared and emailed to you.</p>
+    <p>You may close this tab.</p>
+    </div>
+
+    </body>
+    </html>
+    """
