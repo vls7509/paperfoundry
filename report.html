@@ -1,0 +1,30 @@
+<html>
+<head>
+    <style>
+        body { font-family: Arial; padding:40px; }
+        h1 { color:#0f172a; }
+        .box { background:#f1f5f9; padding:20px; margin-top:20px; }
+    </style>
+</head>
+<body>
+
+<h1>Your Work Style: {{workstyle}}</h1>
+
+<div class="box">
+<h2>Example Career Areas</h2>
+<ul>
+{% for c in careers %}
+<li>{{c}}</li>
+{% endfor %}
+</ul>
+</div>
+
+<div class="box">
+<h2>Relevant Major Group</h2>
+<p>{{major}}</p>
+</div>
+
+<p>This is an early prototype report — the full detailed version will expand these insights.</p>
+
+</body>
+</html>
